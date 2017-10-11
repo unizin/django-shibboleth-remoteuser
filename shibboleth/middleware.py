@@ -2,8 +2,10 @@ from django.contrib.auth.middleware import RemoteUserMiddleware
 from django.contrib.auth.models import Group
 from django.contrib import auth
 from django.core.exceptions import ImproperlyConfigured
+from django.urls import reverse
 
-from shibboleth.app_settings import SHIB_ATTRIBUTE_MAP, GROUP_ATTRIBUTES, LOGOUT_SESSION_KEY
+from shibboleth.app_settings import GROUP_ATTRIBUTES, LOGOUT_SESSION_KEY, SHIB_ATTRIBUTE_MAP, \
+    SHIB_REMOTE_USER_HEADER_NAME, SHIB_SKIP_SHIB_AUTH_FOR_ADMIN
 
 
 class ShibbolethRemoteUserMiddleware(RemoteUserMiddleware):
@@ -11,7 +13,15 @@ class ShibbolethRemoteUserMiddleware(RemoteUserMiddleware):
     Authentication Middleware for use with Shibboleth.  Uses the recommended pattern
     for remote authentication from: http://code.djangoproject.com/svn/django/tags/releases/1.3/django/contrib/auth/middleware.py
     """
+    # This header needs to be set manually in the apache conf file
+
+    header = SHIB_REMOTE_USER_HEADER_NAME
+
     def process_request(self, request):
+        # FIXME what should we do when there is a language prefix, e.g., /en/admin?
+        if SHIB_SKIP_SHIB_AUTH_FOR_ADMIN and request.path.startswith(reverse('admin:index')):
+            return None
+
         # AuthenticationMiddleware is required so that request.user exists.
         if not hasattr(request, 'user'):
             raise ImproperlyConfigured(
@@ -37,7 +47,7 @@ class ShibbolethRemoteUserMiddleware(RemoteUserMiddleware):
             # request.user set to AnonymousUser by the
             # AuthenticationMiddleware).
             return
-        #If we got an empty value for request.META[self.header], treat it like
+        # If we got an empty value for request.META[self.header], treat it like
         #   self.header wasn't in self.META at all - it's still an anonymous user.
         if not username:
             return
@@ -64,7 +74,7 @@ class ShibbolethRemoteUserMiddleware(RemoteUserMiddleware):
             # by logging the user in.
             request.user = user
             auth.login(request, user)
-            
+
             # Upgrade user groups if configured in the settings.py
             # If activated, the user will be associated with those groups.
             if GROUP_ATTRIBUTES:

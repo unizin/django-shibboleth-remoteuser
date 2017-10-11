@@ -28,5 +28,9 @@ LOGOUT_URL = getattr(settings, 'SHIBBOLETH_LOGOUT_URL', None)
 LOGOUT_REDIRECT_URL = getattr(settings, 'SHIBBOLETH_LOGOUT_REDIRECT_URL', None)
 #Name of key.  Probably no need to change this.  
 LOGOUT_SESSION_KEY = getattr(settings, 'SHIBBOLETH_FORCE_REAUTH_SESSION_KEY', 'shib_force_reauth')
+# The Django middleware accepts an optional attribute
+# specifying the name of the header which contains the remote user
+SHIB_REMOTE_USER_HEADER_NAME = getattr(settings, 'SHIB_REMOTE_USER_HEADER_NAME', 'REMOTE_USER')
+SHIB_SKIP_SHIB_AUTH_FOR_ADMIN = getattr(settings, 'SHIB_SKIP_SHIB_AUTH_FOR_ADMIN', False)
 
 
